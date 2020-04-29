@@ -18,7 +18,9 @@ router.post('/', function(req, res, next) {
     && login === auth.login
     && password === auth.password
   ) {
-    res.send(res.body);
+    var data = JSON.stringify(req.body);
+    console.log(data);
+    return res.end(data);
   }
 
   // Access denied...
