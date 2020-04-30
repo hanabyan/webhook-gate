@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+const { WebClient } = require('@slack/web-api');
 
 /**
  * currently only available for slack
@@ -60,6 +61,7 @@ function deployHqHandler(req) {
   if (req.payload) {
     var deployType = 'Manual Deployment';
     var serverNames = [];
+    var timeInfo = `>Queued at: ${new Date(queued_at)}\n>Started at: ${new Date(started_at)}\n`;
 
     servers.forEach(function(server) {
       if (server.auto_deploy) {
@@ -67,18 +69,30 @@ function deployHqHandler(req) {
       }
 
       if (server.name) {
-        serverNames.push(`(*) ${server.name} (last revision: ${server.last_revision})`);
+        serverNames.push(`>- ${server.name} (last revision: ${server.last_revision})\n`);
       }
     });
 
+    if (status !== 'running') {
+      timeInfo = `>Completed at: ${new Date(completed_at)}\n`;
+    }
+
     // TODO: beatufiy with new line
-    var message = `>${deployType}: *${projectName}* (identifier: ${identifier}) *@${branch} on: ${serverNames.join(', ')}* is *${status}*. Start revision ${startRev} : End revision ${endRev}. By ${deployer}.`;
-    console.log(message);
+    var message = `@channel\n>${deployType}: *${projectName}* is \`${status}\`.\n>Branch: *@${branch}*, on: \n${serverNames.join('')}>Identifier: ${identifier}\n${timeInfo}>Start revision ${startRev}\n>End revision ${endRev}\n>By ${deployer}.`;
+    sendToSlack(message);
   }
 }
 
-function sendToSlack() {
-
+async function sendToSlack(message) {
+  var token = process.env.SLACK_TOKEN;
+  var channel1 = process.env.SLACK_CHANNEL_1;
+  var web = new WebClient(token);
+  try {
+    var response = await web.chat.postMessage({ channel: channel1, text: message, username: 'Info Deploy' })
+    console.log(response);
+  } catch(error) {
+    console.log(error);
+  }
 }
 
 module.exports = router;
