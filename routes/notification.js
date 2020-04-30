@@ -79,16 +79,29 @@ function deployHqHandler(req) {
 
     // TODO: beatufiy with new line
     var message = `@channel\n>${deployType}: *${projectName}* is \`${status}\`.\n>Branch: *@${branch}*, on: \n${serverNames.join('')}>Identifier: ${identifier}\n${timeInfo}>Start revision ${startRev}\n>End revision ${endRev}\n>By ${deployer}.`;
-    sendToSlack(message);
+    sendToSlack(message, projectName);
   }
 }
 
-async function sendToSlack(message) {
+async function sendToSlack(message, projectName) {
   var token = process.env.SLACK_TOKEN;
-  var channel1 = process.env.SLACK_CHANNEL_1;
+  // TODO: update dynamic
+  var channel1Name = process.env.SLACK_CHANNEL_1_NAME;
+  var channel2Name = process.env.SLACK_CHANNEL_2_NAME;
+  var channelId;
+
+  switch(projectName) {
+    case channel2Name:
+      channelId = process.env.SLACK_CHANNEL_2_ID
+      break;
+    default:
+      channelId = process.env.SLACK_CHANNEL_1_ID
+      break;
+  }
+
   var web = new WebClient(token);
   try {
-    var response = await web.chat.postMessage({ channel: channel1, text: message, username: 'Info Deploy' })
+    var response = await web.chat.postMessage({ channel: channelId, text: message, username: 'Info Deploy' })
     console.log(response);
   } catch(error) {
     console.log(error);
